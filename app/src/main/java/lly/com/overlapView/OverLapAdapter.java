@@ -1,6 +1,7 @@
 package lly.com.overlapView;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,9 +47,8 @@ public class OverLapAdapter {
         } else {
             tv_title.setTextSize(16);
         }
-//        img_lol.setImageURI(Uri.parse(entityList.get(position).getLeagueImage()));
-//        img_lol.setBackgroundDrawable(R.mipmap.lei);
-        img_lol.setBackgroundResource(R.mipmap.lei);
+        img_lol.setImageURI(Uri.parse(entityList.get(position).getLeagueImage()));
+//        img_lol.setBackgroundResource(R.mipmap.lei);
         tv_title.setText(entityList.get(position).getLeagueName());
         tv_type.setText(entityList.get(position).getLeagueType());
         return view;
