@@ -9,4 +9,4 @@
 ![image](https://github.com/ght199266/OverlapView/blob/master/app/src/screenshots/gif.gif)
 
 
-如果有已经可以反馈到我的邮箱：849851251@qq.com
+如果有意见和BUG可以反馈到我的邮箱：849851251@qq.com
