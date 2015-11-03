@@ -2,6 +2,7 @@ package lly.com.overlapView.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +28,7 @@ public class OverLapView extends FrameLayout {
     //上下文对象
     private Context mContext;
     //item高度
-    private int itemHeight = 480;
+    private int itemHeight = 240;
     //item数量
     private int itemCount = 10;
     //正常显示的TextSize大小
@@ -62,6 +63,10 @@ public class OverLapView extends FrameLayout {
     //初始化
     private void init() {
         screenWeigh = Utils.getWindowWidth(mContext);
+        Log.v("leizi", "W:" + screenWeigh);
+        Log.v("leizi", "H:" + Utils.getWindowHeight(mContext));
+
+        Log.v("leizi", "DP.TO PX:" + Utils.dip2px(mContext, 240));
     }
 
     public void setScrollViewHeight(int scrollViewHeight) {
@@ -107,14 +112,14 @@ public class OverLapView extends FrameLayout {
         if (ischeck) {
             onCheckRapidSlide(scrolly, currentScrollY);
         }
-        int index = (int) Math.ceil(scrolly / (itemHeight / 2f));
+        int index = (int) Math.ceil(scrolly / 240.0);
         View view = getChildAt(index);//获取当前需要滚动的View
         if (view == null || index == 0) {
             return;
         }
         currentScrollY = scrolly;
         setViewPropertyValue(index, view, scrolly);
-        int newScroll = scrolly - ((index - 1) * (itemHeight / 2));
+        int newScroll = (int) (scrolly - ((index - 1) * 240.0));
         view.setTranslationY(-newScroll);
 
 //        if (index == overLapAdapter.getCount() - 1) {
@@ -154,7 +159,8 @@ public class OverLapView extends FrameLayout {
         if (tv_title == null) {
             return;
         }
-        float value = ((scrollY - (index - 1) * (itemHeight / 2f)) / (itemHeight / 2f));
+        float value = ((scrollY - (index - 1) * (itemHeight * 1f)) / (itemHeight * 1f));
+        Log.v("leizi", "Value:=" + value);
         tv_title.setScaleX(1 + value / 2);
         tv_title.setScaleY(1 + value / 2);
         View view = v.findViewById(R.id.v_container);//改变透明度
@@ -176,7 +182,7 @@ public class OverLapView extends FrameLayout {
             lastView.setLayoutParams(layoutParams1);
         }
         //设置FrameLayout的高度
-        int frameLayoutHeight = (getChildCount() * Utils.dip2px(mContext, itemHeight / 4)) + lastViewHeight;
+        int frameLayoutHeight = (getChildCount() * Utils.dip2px(mContext, itemHeight / 2)) + lastViewHeight;
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(new ViewGroup.LayoutParams(screenWeigh, frameLayoutHeight));
         this.setLayoutParams(layoutParams);
     }
@@ -187,9 +193,9 @@ public class OverLapView extends FrameLayout {
         for (int i = 0; i < getChildCount(); i++) {
             View v = getChildAt(i);
             if (i == 0) {
-                v.layout(0, 0, screenWeigh, itemHeight);
+                v.layout(0, 0, screenWeigh, itemHeight * 2);
             } else {
-                v.layout(0, (itemHeight / 2) * (i + 1), screenWeigh, itemHeight * (i + 1));
+                v.layout(0, itemHeight * (i + 1), screenWeigh, (itemHeight * 2) * (i + 1));
             }
         }
     }
