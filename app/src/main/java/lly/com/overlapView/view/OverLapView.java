@@ -2,7 +2,6 @@ package lly.com.overlapView.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,10 +62,7 @@ public class OverLapView extends FrameLayout {
     //初始化
     private void init() {
         screenWeigh = Utils.getWindowWidth(mContext);
-        Log.v("leizi", "W:" + screenWeigh);
-        Log.v("leizi", "H:" + Utils.getWindowHeight(mContext));
 
-        Log.v("leizi", "DP.TO PX:" + Utils.dip2px(mContext, 240));
     }
 
     public void setScrollViewHeight(int scrollViewHeight) {
@@ -88,7 +84,11 @@ public class OverLapView extends FrameLayout {
     public void addView() {
         for (int i = 0; i < overLapAdapter.getCount(); i++) {
             final View view = overLapAdapter.getView(i, this);
-            FrameLayout.LayoutParams layoutParams = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, Utils.dip2px(mContext, 240)));
+            int viewHeight = Utils.dip2px(mContext, itemHeight);
+            if (viewHeight == itemHeight) {//转换失败的情况
+                viewHeight = viewHeight * 2;
+            }
+            FrameLayout.LayoutParams layoutParams = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, viewHeight));
             view.setLayoutParams(layoutParams);
             final int index = i;
             view.setOnClickListener(new OnClickListener() {
@@ -160,7 +160,6 @@ public class OverLapView extends FrameLayout {
             return;
         }
         float value = ((scrollY - (index - 1) * (itemHeight * 1f)) / (itemHeight * 1f));
-        Log.v("leizi", "Value:=" + value);
         tv_title.setScaleX(1 + value / 2);
         tv_title.setScaleY(1 + value / 2);
         View view = v.findViewById(R.id.v_container);//改变透明度
@@ -176,13 +175,18 @@ public class OverLapView extends FrameLayout {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         //设置底部View的高度
-        int lastViewHeight = (scrollViewHeight - Utils.dip2px(mContext, 240));
+        int itemheight = Utils.dip2px(mContext, itemHeight);
+        if (itemheight == itemHeight) {
+            itemheight = itemheight * 2;
+        }
+        int lastViewHeight = (scrollViewHeight - itemheight);
         if (lastView != null) {
             FrameLayout.LayoutParams layoutParams1 = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, lastViewHeight));
             lastView.setLayoutParams(layoutParams1);
         }
         //设置FrameLayout的高度
-        int frameLayoutHeight = (getChildCount() * Utils.dip2px(mContext, itemHeight / 2)) + lastViewHeight;
+//        int itemHeight = getChildAt(0).getHeight() != 0
+        int frameLayoutHeight = (getChildCount() * (itemheight / 2)) + lastViewHeight;
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(new ViewGroup.LayoutParams(screenWeigh, frameLayoutHeight));
         this.setLayoutParams(layoutParams);
     }
