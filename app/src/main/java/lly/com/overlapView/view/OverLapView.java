@@ -1,10 +1,14 @@
 package lly.com.overlapView.view;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -28,8 +32,6 @@ public class OverLapView extends FrameLayout {
     private Context mContext;
     //item高度
     private int itemHeight = 240;
-    //item数量
-    private int itemCount = 10;
     //正常显示的TextSize大小
     private static final float NORMALTEXTSIZE = 24f;
     //隐藏Item的字体大小
@@ -47,6 +49,8 @@ public class OverLapView extends FrameLayout {
     //点击事件处理回调
     private OverlapScrollView.onOverLapItemOnClickListener onOverLapItemOnClickListener;
 
+    private int itemHeightPX;
+
     public OverLapView(Context context) {
         super(context);
         mContext = context;
@@ -62,7 +66,7 @@ public class OverLapView extends FrameLayout {
     //初始化
     private void init() {
         screenWeigh = Utils.getWindowWidth(mContext);
-
+        itemHeightPX = Utils.dip2px(mContext, itemHeight);
     }
 
     public void setScrollViewHeight(int scrollViewHeight) {
@@ -84,11 +88,7 @@ public class OverLapView extends FrameLayout {
     public void addView() {
         for (int i = 0; i < overLapAdapter.getCount(); i++) {
             final View view = overLapAdapter.getView(i, this);
-            int viewHeight = Utils.dip2px(mContext, itemHeight);
-            if (viewHeight == itemHeight) {//转换失败的情况
-                viewHeight = viewHeight * 2;
-            }
-            FrameLayout.LayoutParams layoutParams = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, viewHeight));
+            LayoutParams layoutParams = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, itemHeightPX));
             view.setLayoutParams(layoutParams);
             final int index = i;
             view.setOnClickListener(new OnClickListener() {
@@ -103,6 +103,15 @@ public class OverLapView extends FrameLayout {
         }
         lastView = LayoutInflater.from(mContext).inflate(R.layout.last_empty_layout, null);
         this.addView(lastView);
+
+        this.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void onGlobalLayout() {
+                setLayoutParams();
+                OverLapView.this.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
     }
 
     /**
@@ -112,19 +121,16 @@ public class OverLapView extends FrameLayout {
         if (ischeck) {
             onCheckRapidSlide(scrolly, currentScrollY);
         }
-        int index = (int) Math.ceil(scrolly / 240.0);
+
+        int index = (int) Math.ceil(scrolly / ((itemHeightPX / 2) * 1.0f));
         View view = getChildAt(index);//获取当前需要滚动的View
         if (view == null || index == 0) {
             return;
         }
         currentScrollY = scrolly;
         setViewPropertyValue(index, view, scrolly);
-        int newScroll = (int) (scrolly - ((index - 1) * 240.0));
+        int newScroll = (int) (scrolly - ((index - 1) * ((itemHeightPX / 2) * 1.0f)));
         view.setTranslationY(-newScroll);
-
-//        if (index == overLapAdapter.getCount() - 1) {
-//            Log.v("leizi", "滑动最底部了。。" + scrolly);
-//        }
     }
 
     /**
@@ -162,47 +168,46 @@ public class OverLapView extends FrameLayout {
         float value = ((scrollY - (index - 1) * (itemHeight * 1f)) / (itemHeight * 1f));
         tv_title.setScaleX(1 + value / 2);
         tv_title.setScaleY(1 + value / 2);
-        View view = v.findViewById(R.id.v_container);//改变透明度
+        View view = v.findViewById(R.id.v_container);
         view.setAlpha(1 - value);
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
+    /**
+     * 设置高度
+     */
+    public void setLayoutParams() {
+        int lastViewHeight = (scrollViewHeight - itemHeightPX);
+        if (lastView != null) {
+            LayoutParams layoutParams1 = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, lastViewHeight));
+            lastView.setLayoutParams(layoutParams1);
+        }
+        int frameLayoutHeight = (getChildCount() * (itemHeightPX / 2)) + lastViewHeight;
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(new ViewGroup.LayoutParams(screenWeigh, frameLayoutHeight));
+        this.setLayoutParams(layoutParams);
+
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        //设置底部View的高度
-        int itemheight = Utils.dip2px(mContext, itemHeight);
-        if (itemheight == itemHeight) {
-            itemheight = itemheight * 2;
-        }
-        int lastViewHeight = (scrollViewHeight - itemheight);
-        if (lastView != null) {
-            FrameLayout.LayoutParams layoutParams1 = new LayoutParams(new ViewGroup.LayoutParams(screenWeigh, lastViewHeight));
-            lastView.setLayoutParams(layoutParams1);
-        }
-        //设置FrameLayout的高度
-//        int itemHeight = getChildAt(0).getHeight() != 0
-        int frameLayoutHeight = (getChildCount() * (itemheight / 2)) + lastViewHeight;
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(new ViewGroup.LayoutParams(screenWeigh, frameLayoutHeight));
-        this.setLayoutParams(layoutParams);
+        Log.v("leizi", "onSizeChanged");
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
+//        int ItemHeight = Utils.dip2px(mContext, itemHeight);
         for (int i = 0; i < getChildCount(); i++) {
             View v = getChildAt(i);
             if (i == 0) {
-                v.layout(0, 0, screenWeigh, itemHeight * 2);
+                v.layout(0, 0, screenWeigh, itemHeightPX);
             } else {
-                v.layout(0, itemHeight * (i + 1), screenWeigh, (itemHeight * 2) * (i + 1));
+                int top1 = itemHeightPX + ((itemHeightPX / 2) * (i - 1));
+                Log.v("leizi", "Top:=" + top1);
+                v.layout(0, top1, screenWeigh, itemHeightPX * (i + 1));
             }
+
         }
     }
-
 
 }

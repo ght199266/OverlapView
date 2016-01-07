@@ -1,19 +1,21 @@
 package lly.com.overlapView.view;
 
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.animation.LinearInterpolator;
 import android.widget.ScrollView;
 
 import lly.com.overlapView.OverLapAdapter;
 import lly.com.overlapView.R;
-
 
 /**
  * OverlapScrollView[v 1.0.0]
@@ -32,7 +34,6 @@ public class OverlapScrollView extends ScrollView {
     //填充的View
     private OverLapView overLapView;
 
-
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -44,8 +45,12 @@ public class OverlapScrollView extends ScrollView {
                 handler.sendMessageDelayed(handler.obtainMessage(), 5);
             }
             if (overLapView != null) {
-                int currentItem = Math.round(scrollY / 240.0f);
-                ValueAnimator valueAnimator = ValueAnimator.ofInt(scrollY, currentItem * 240);
+                float itemHeight = 0f;//获取第一个Item的高度
+                if (itemHeight == 0f) {
+                    itemHeight = overLapView.getChildAt(0).getHeight() / 2;
+                }
+                int currentItem = Math.round(scrollY / itemHeight);
+                ValueAnimator valueAnimator = ValueAnimator.ofInt(scrollY, currentItem * (int) itemHeight);
                 valueAnimator.setDuration(200);
                 valueAnimator.setInterpolator(new LinearInterpolator());
                 valueAnimator.start();
@@ -57,12 +62,6 @@ public class OverlapScrollView extends ScrollView {
                         overLapView.setTranslation(value, true);
                     }
                 });
-//                valueAnimator.addListener(new AnimatorListenerAdapter() {
-//                    @Override
-//                    public void onAnimationEnd(Animator animation) {
-//                        super.onAnimationEnd(animation);
-//                    }
-//                });
             }
         }
     };
@@ -91,7 +90,7 @@ public class OverlapScrollView extends ScrollView {
     protected void onFinishInflate() {
         super.onFinishInflate();
         View view = LayoutInflater.from(mContext).inflate(R.layout.overlap_layout, null);
-        overLapView = (OverLapView) view.findViewById(R.id.fragment);
+        overLapView = (OverLapView) view.findViewById(R.id.over_container);
         this.addView(view);
     }
 
@@ -112,12 +111,18 @@ public class OverlapScrollView extends ScrollView {
         return super.onTouchEvent(ev);
     }
 
-    public void setAdapter(OverLapAdapter overLapAdapter) {
+    public void setAdapter(final OverLapAdapter overLapAdapter) {
         if (overLapAdapter == null) {
             new NullPointerException("mOverLapAdapter is null");
         }
-        overLapView.setOverLapAdapter(overLapAdapter);
-
+        overLapView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void onGlobalLayout() {
+                overLapView.setOverLapAdapter(overLapAdapter);
+                overLapView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
     }
 
     public interface onOverLapItemOnClickListener {
